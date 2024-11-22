@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Eligibility Checker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .error {
+            background-color: #f2dede;
+            color: #a94442;
+        }
+        #errorMessage {
+            color: red;
+            margin-top: 10px;
+            padding: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Student Eligibility Checker</h1>
+        <div>
+            <label for="studentId">Student ID:</label>
+            <input type="text" id="studentId" placeholder="Enter Student ID (e.g., 23BCE0275)">
+            <button onclick="checkEligibility()">Check Eligibility</button>
+        </div>
+        <div id="errorMessage"></div>
+        <div id="scholarshipResult" class="result"></div>
+        <div id="examResult" class="result"></div>
+    </div>
+
+    <script>
+        async function checkEligibility() {
+            const studentId = document.getElementById('studentId').value;
+            const errorDiv = document.getElementById('errorMessage');
+            const scholarshipDiv = document.getElementById('scholarshipResult');
+            const examDiv = document.getElementById('examResult');
+            
+            // Clear previous results
+            errorDiv.style.display = 'none';
+            scholarshipDiv.innerHTML = '';
+            examDiv.innerHTML = '';
+            
+            try {
+                // Check scholarship eligibility
+                console.log('Checking scholarship for:', studentId);
+                const scholarshipResponse = await fetch(`http://localhost:8000/api/scholarship/?student_id=${studentId}`);
+                console.log('Scholarship response:', scholarshipResponse);
+                
+                if (!scholarshipResponse.ok) {
+                    throw new Error(`Scholarship check failed: ${scholarshipResponse.status}`);
+                }
+                
+                const scholarshipData = await scholarshipResponse.json();
+                
+                // Check exam eligibility
+                console.log('Checking exam permission for:', studentId);
+                const examResponse = await fetch(`http://localhost:8000/api/exam/?student_id=${studentId}`);
+                console.log('Exam response:', examResponse);
+                
+                if (!examResponse.ok) {
+                    throw new Error(`Exam check failed: ${examResponse.status}`);
+                }
+                
+                const examData = await examResponse.json();
+                
+                // Display results
+                scholarshipDiv.innerHTML = `Scholarship Status: ${scholarshipData.message}`;
+                scholarshipDiv.className = `result ${scholarshipData.status ? 'success' : 'error'}`;
+                
+                examDiv.innerHTML = `Exam Status: ${examData.message}`;
+                examDiv.className = `result ${examData.status ? 'success' : 'error'}`;
+                
+            } catch (error) {
+                console.error('Detailed error:', error);
+                errorDiv.style.display = 'block';
+                errorDiv.innerHTML = `Error: ${error.message}. Make sure the Prolog server is running on port 8000.`;
+            }
+        }
+    </script>
+</body>
+</html>
